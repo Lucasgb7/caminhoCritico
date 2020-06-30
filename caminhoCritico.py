@@ -1,14 +1,16 @@
 from Graphs import Graphs
+
+
 # https://escritoriodeprojetos.com.br/metodo-do-caminho-critico
 
 
 def forward_pass(task):
-    for fw in task: # atividade de ida
-        if '-1' in task[fw]['dependencies']:    # verifica se e a primeira atividade (vertice)
+    for fw in task:  # atividade de ida
+        if '-1' in task[fw]['dependencies']:  # verifica se e a primeira atividade (vertice)
             task[fw]['ES'] = 1
             task[fw]['EF'] = task[fw]['duration']
         else:
-            for k in task.keys():***
+            for k in task.keys():
                 for dependency in task[k]['dependencies']:  # passa por todas as dependencias de uma atividade
                     if dependency != '-1' and len(task[k]['dependencies']) == 1:
                         task[k]['ES'] = int(task[dependency]['EF']) + 1
@@ -21,28 +23,29 @@ def forward_pass(task):
 
 def backward_pass(task, keys_reverse):
     for bw in keys_reverse:
-        if (keys_reverse.index(bw) == 0):   # verifica se e a ultima atividade
-            tasks[bw]['LF'] = tasks[bw]['EF']
-            tasks[bw]['LS'] = tasks[bw]['ES']
+        if (keys_reverse.index(bw) == 0):  # verifica se e a ultima atividade
+            task[bw]['LF'] = task[bw]['EF']
+            task[bw]['LS'] = task[bw]['ES']
 
-        for dependency in tasks[bw]['dependencies']:  # slides all the dependency in a single task
-            if (dependency != '-1'):  # check if it's NOT the last task
-                if (tasks[dependency]['LF'] == 0):  # check if the the dependency is already analyzed
-                    # print('ID dependency: '+str(tasks['task'+dependency]['id']) + ' bw: '+str(tasks[bw]['id']))
-                    tasks[dependency]['LF'] = int(tasks[bw]['LS']) - 1
-                    tasks[dependency]['LS'] = int(tasks[dependency]['LF']) - int(
-                        tasks[dependency]['duration']) + 1
-                    tasks[dependency]['float'] = int(tasks[dependency]['LF']) - int(
-                        tasks[dependency]['EF'])
-                    # print('IF1 dip LS: '+str(tasks['task'+dependency]['LS']) +' dip LF: '+str(tasks['task'+dependency]['LF']) + ' bw: '+str(tasks[bw]['id'])+' bw ES '+ str(tasks[bw]['ES']))
-                if (int(tasks[dependency]['LF']) > int(
-                        tasks[bw]['LS'])):  # put the minimun value of LF for the dependencies of a task
-                    tasks[dependency]['LF'] = int(tasks[bw]['LS']) - 1
-                    tasks[dependency]['LS'] = int(tasks[dependency]['LF']) - int(
-                        tasks[dependency]['duration']) + 1
-                    tasks[dependency]['float'] = int(tasks[dependency]['LF']) - int(
-                        tasks[dependency]['EF'])
-                    # print('IF2 dip LS: '+str(tasks['task'+dipendenza]['LS']) +' dip LF: '+str(tasks['task'+dipendenza]['LF']) + ' bw: '+str(tasks[bw]['id']))
+        for dependency in task[bw]['dependencies']:  # passa por todos as atividades dependentes
+            if (dependency != '-1'):  # verifica se nao e a ultima dependencia
+                if (task[dependency]['LF'] == 0):  # verifica se a dependencia ja foi analizada
+                    # print('ID dependency: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
+                    task[dependency]['LF'] = int(task[bw]['LS']) - 1
+                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(
+                        task[dependency]['duration']) + 1
+                    task[dependency]['float'] = int(task[dependency]['LF']) - int(
+                        task[dependency]['EF'])
+                    # print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
+                if (int(task[dependency]['LF']) > int(
+                        task[bw]['LS'])):  # insere o menor valor do LF para atividade dependente
+                    task[dependency]['LF'] = int(task[bw]['LS']) - 1
+                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(
+                        task[dependency]['duration']) + 1
+                    task[dependency]['float'] = int(task[dependency]['LF']) - int(
+                        task[dependency]['EF'])
+                    # print('IF2 dip LS: '+str(task[dependencies]['LS']) +' dip LF: '+str(task[dependencies]['LF']) + ' bw: '+str(task[bw]['id']))
+
 
 if __name__ == '__main__':
     # Tabela de  atividades
@@ -74,16 +77,16 @@ if __name__ == '__main__':
         task[i]['float'] = 0
         task[i]['critical'] = False
 
-    forward_pass(task) # faz o caminho de ida
+    forward_pass(task)  # faz o caminho de ida
 
     keys = list()
-    for e in task.keys(): # lista das chaves das atividades
+    for e in task.keys():  # lista das chaves das atividades
         keys.append(e)
 
     keys_reverse = list()
-    while len(keys) > 0:    # lista das chaves ao contrario para caminho de volta
+    while len(keys) > 0:  # lista das chaves ao contrario para caminho de volta
         keys_reverse.append(keys.pop())
-    
+
     backward_pass(task, keys_reverse)
 
     edges = []
@@ -101,7 +104,9 @@ if __name__ == '__main__':
     print("Arestas: ", edges)  # add edges
 
     print('task id, task name, duration, ES, EF, LS, LF, float, isCritical')
-    for task in tasks:
-        if(tasks[task]['float'] == 0): # folga = 0 faz parte do caminho critico
-            tasks[task]['isCritical'] = True
-        print(str(tasks[task]['id']) +', '+str(tasks[task]['name']) +', '+str(tasks[task]['duration']) +', '+str(tasks[task]['ES']) +', '+str(tasks[task]['EF']) +', '+str(tasks[task]['LS']) +', '+str(tasks[task]['LF']) +', '+str(tasks[task]['float']) +', '+str(tasks[task]['isCritical']))
+    for t in task:
+        if (task[t]['float'] == 0):  # folga = 0 faz parte do caminho critico
+            task[t]['isCritical'] = True
+        print(str(task[t]['id']) + ', ' + str(task[t]['name']) + ', ' + str(task[t]['duration']) + ', ' + str(
+            task[t]['ES']) + ', ' + str(task[t]['EF']) + ', ' + str(task[t]['LS']) + ', ' + str(
+            task[t]['LF']) + ', ' + str(task[t]['float']) + ', ' + str(task[t]['isCritical']))
