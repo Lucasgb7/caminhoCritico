@@ -8,8 +8,8 @@ from collections import defaultdict
 def forward_pass(task):
     for fw in task:  # atividade de ida
         if '-1' in task[fw]['dependencies']:  # verifica se e a primeira atividade (vertice)
-            task[fw]['ES'] = 1
-            task[fw]['EF'] = task[fw]['duration']
+            task[fw]['ES'] = 1  # early start
+            task[fw]['EF'] = task[fw]['duration']   # early finish
         else:  # nao e a primeira atividade
             for k in task.keys():
                 for dependency in task[k]['dependencies']:  # passa por todas as dependencias de uma atividade
@@ -31,21 +31,16 @@ def backward_pass(task, keys_reverse):
         for dependency in task[bw]['dependencies']:  # passa por todos as atividades dependentes
             if dependency != '-1':  # verifica se nao e a ultima dependencia
                 if task[dependency]['LF'] == 0:  # verifica se a dependencia ja foi analizada
-                    # print('ID dependency: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
+                    print('ID_Depedencia: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
                     task[dependency]['LF'] = int(task[bw]['LS']) - 1
-                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(
-                        task[dependency]['duration']) + 1
-                    task[dependency]['float'] = int(task[dependency]['LF']) - int(
-                        task[dependency]['EF'])
-                    # print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
-                if (int(task[dependency]['LF']) > int(
-                        task[bw]['LS'])):  # insere o menor valor do LF para atividade dependente
+                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
+                    task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
+                    print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
+                if int(task[dependency]['LF']) > int(task[bw]['LS']):  # insere o menor valor do LF para atividade dependente
                     task[dependency]['LF'] = int(task[bw]['LS']) - 1
-                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(
-                        task[dependency]['duration']) + 1
-                    task[dependency]['float'] = int(task[dependency]['LF']) - int(
-                        task[dependency]['EF'])
-                    # print('IF2 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id']))
+                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
+                    task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
+                    print('IF2 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id']))
 
 
 if __name__ == '__main__':
@@ -58,28 +53,32 @@ if __name__ == '__main__':
     # duration = [6, 2, 3, 10, 3, 2, 4, 5, 8, 6, 4, 2, 0]  # duracao de cada atividade
     # previous = ['', '', '', 'A', 'A', 'B', 'C', 'E', 'F,G', 'G', 'I', 'J', 'D,H,K,L']  # precedente das atividades
 
-    activity = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']  # atividades
-    duration = [12, 6, 12, 18, 2, 10, 8, 8, 6, 2, 8]  # duracao de cada atividade
-    previous = ['', 'A', 'A', 'A', 'B', 'C,D', 'D', 'E', 'F', 'G', 'H,I,J']
+    # activity = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']  # atividades
+    # duration = [12, 6, 12, 18, 2, 10, 8, 8, 6, 2, 8]  # duracao de cada atividade
+    # previous = ['', 'A', 'A', 'A', 'B', 'C,D', 'D', 'E', 'F', 'G', 'H,I,J']
 
-    table_length = len(activity)
-
+    line = list()   # cada linha do txt
+    element = list()   # cada elemento do txt
     task = dict()
-    for i in range(table_length):
-        task[i] = dict()
-        task[i]['id'] = i
-        task[i]['name'] = activity[i]
-        task[i]['duration'] = duration[i]
-        if len(previous[i]) >= 1:  # tem dependencia
-            task[i]['dependencies'] = previous[i].split(',')
-        else:
-            task[i]['dependencies'] = ['-1']  # nao tem dependencia
-        task[i]['ES'] = 0
-        task[i]['EF'] = 0
-        task[i]['LS'] = 0
-        task[i]['LF'] = 0
-        task[i]['float'] = 0
-        task[i]['critical'] = False
+    file = open('task2.txt')
+
+    for line in file:
+        element = line.split(',')
+        for i in range(len(element)):
+            task[element[0]] = dict()
+            task[element[0]]['id'] = element[0]
+            task[element[0]]['name'] = element[1]
+            task[element[0]]['duration'] = element[2]
+            if element[3] != "\n":  # tem dependencia
+                task[element[0]]['dependencies'] = element[3].strip().split(';')
+            else:
+                task[element[0]]['dependencies'] = ['-1']  # nao tem dependencia
+            task[element[0]]['ES'] = 0
+            task[element[0]]['EF'] = 0
+            task[element[0]]['LS'] = 0
+            task[element[0]]['LF'] = 0
+            task[element[0]]['float'] = 0
+            task[element[0]]['critical'] = False
 
     forward_pass(task)  # faz o caminho de ida
 
@@ -91,8 +90,9 @@ if __name__ == '__main__':
     while len(keys) > 0:  # lista das chaves ao contrario para caminho de volta
         keys_reverse.append(keys.pop())
 
-    # backward_pass(task, keys_reverse)
+    backward_pass(task, keys_reverse)
 
+    """""
     edges = []
     for i in range(table_length):  # Em cada atividade
         if len(previous[i]) < 1:
@@ -106,11 +106,12 @@ if __name__ == '__main__':
             edges.append([previous[i], activity[i]])  # Adiciona o antecessor
 
     print("Arestas: ", edges)  # add edges
+    """
 
     print('ID Atividade, Duracao, ES, EF, LS, LF, float, critical')
     for t in task:
         if task[t]['float'] == 0:  # folga = 0 faz parte do caminho critico
             task[t]['critical'] = True
-        print(str(task[t]['id']) + ', ' + str(task[t]['duration']) + ', ' + str(
+        print(str(task[t]['id']) + ', ' + str(task[t]['name']) + ',' + str(task[t]['duration']) + ', ' + str(
             task[t]['ES']) + ', ' + str(task[t]['EF']) + ', ' + str(task[t]['LS']) + ', ' + str(
             task[t]['LF']) + ', ' + str(task[t]['float']) + ', ' + str(task[t]['critical']))
