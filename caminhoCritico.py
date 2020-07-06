@@ -31,16 +31,16 @@ def backward_pass(task, keys_reverse):
         for dependency in task[bw]['dependencies']:  # passa por todos as atividades dependentes
             if dependency != '-1':  # verifica se nao e a ultima dependencia
                 if task[dependency]['LF'] == 0:  # verifica se a dependencia ja foi analizada
-                    print('ID_Depedencia: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
+                    # print('ID_Depedencia: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
                     task[dependency]['LF'] = int(task[bw]['LS']) - 1
                     task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
                     task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
-                    print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
+                    # print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
                 if int(task[dependency]['LF']) > int(task[bw]['LS']):  # insere o menor valor do LF para atividade dependente
                     task[dependency]['LF'] = int(task[bw]['LS']) - 1
                     task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
                     task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
-                    print('IF2 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id']))
+                    # print('IF2 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id']))
 
 
 if __name__ == '__main__':
@@ -73,10 +73,10 @@ if __name__ == '__main__':
                 task[element[0]]['dependencies'] = element[3].strip().split(';')
             else:
                 task[element[0]]['dependencies'] = ['-1']  # nao tem dependencia
-            task[element[0]]['ES'] = 0
-            task[element[0]]['EF'] = 0
-            task[element[0]]['LS'] = 0
-            task[element[0]]['LF'] = 0
+            task[element[0]]['ES'] = 0  # early start
+            task[element[0]]['EF'] = 0  # early finish
+            task[element[0]]['LS'] = 0  # late start
+            task[element[0]]['LF'] = 0  # late finish
             task[element[0]]['float'] = 0
             task[element[0]]['critical'] = False
 
@@ -85,11 +85,12 @@ if __name__ == '__main__':
     keys = list()
     for e in task.keys():  # lista das chaves das atividades
         keys.append(e)
+    print("Keys: ", keys)
 
     keys_reverse = list()
     while len(keys) > 0:  # lista das chaves ao contrario para caminho de volta
         keys_reverse.append(keys.pop())
-
+    print("Keys_reverse: ", keys_reverse)
     backward_pass(task, keys_reverse)
 
     """""
