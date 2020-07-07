@@ -1,118 +1,109 @@
-from Graphs import Graphs
-from collections import defaultdict
+import networkx as nx
+import matplotlib.pyplot as plt
+from Grafos import Grafo
 
 
-# https://escritoriodeprojetos.com.br/metodo-do-caminho-critico
+def caminhoIda(grafo, vertice, tempo):
+    if tempo >= vertice.getEs():
+        vertice.setEs(tempo)
+        tempoAtual = tempo + vertice.getDuracao()
+        vertice.setEf(tempoAtual)
+        if vertice.getEf() > grafo.tempoCritico:
+            grafo.tempoCritico = vertice.getEf()
+    for amigo in vertice.getConexoes():
+        caminhoIda(grafo, amigo, tempoAtual)
 
 
-def forward_pass(task):
-    for fw in task:  # atividade de ida
-        if '-1' in task[fw]['dependencies']:  # verifica se e a primeira atividade (vertice)
-            task[fw]['ES'] = 1  # early start
-            task[fw]['EF'] = task[fw]['duration']   # early finish
-        else:  # nao e a primeira atividade
-            for k in task.keys():
-                for dependency in task[k]['dependencies']:  # passa por todas as dependencias de uma atividade
-                    if dependency != '-1' and len(task[k]['dependencies']) == 1:
-                        task[k]['ES'] = int(task[dependency]['EF']) + 1
-                        task[k]['EF'] = int(task[k]['ES']) + int(task[k]['duration']) - 1
-                    elif dependency != '-1':
-                        if int(task[dependency]['EF']) > int(task[k]['ES']):
-                            task[k]['ES'] = int(task[dependency]['EF']) + 1
-                            task[k]['EF'] = int(task[k]['ES']) + int(task[k]['duration']) - 1
+def caminhoVolta(vertice, tempo):
+    tempoAtual = vertice.getLs()
+    if tempo <= vertice.getLf() or vertice.getLf() == -1:
+        vertice.setLf(tempo)
+        tempoAtual = tempo - vertice.getDuracao()
+        vertice.setLs(tempoAtual)
+    for amigo in vertice.getPredecessores():
+        caminhoVolta(amigo, tempoAtual)
 
 
-def backward_pass(task, keys_reverse):
-    for bw in keys_reverse:
-        if keys_reverse.index(bw) == 0:  # verifica se e a ultima atividade
-            task[bw]['LF'] = task[bw]['EF']
-            task[bw]['LS'] = task[bw]['ES']
-
-        for dependency in task[bw]['dependencies']:  # passa por todos as atividades dependentes
-            if dependency != '-1':  # verifica se nao e a ultima dependencia
-                if task[dependency]['LF'] == 0:  # verifica se a dependencia ja foi analizada
-                    # print('ID_Depedencia: '+str(task[dependency]['id']) + ' bw: '+str(task[bw]['id']))
-                    task[dependency]['LF'] = int(task[bw]['LS']) - 1
-                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
-                    task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
-                    # print('IF1 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id'])+' bw ES '+ str(task[bw]['ES']))
-                if int(task[dependency]['LF']) > int(task[bw]['LS']):  # insere o menor valor do LF para atividade dependente
-                    task[dependency]['LF'] = int(task[bw]['LS']) - 1
-                    task[dependency]['LS'] = int(task[dependency]['LF']) - int(task[dependency]['duration']) + 1
-                    task[dependency]['float'] = int(task[dependency]['LF']) - int(task[dependency]['EF'])
-                    # print('IF2 dip LS: '+str(task[dependency]['LS']) +' dip LF: '+str(task[dependency]['LF']) + ' bw: '+str(task[bw]['id']))
+def calculaFolga(grafo):
+    for i in range(grafo.numVertices):
+        grafo.getVertice(i).changeFolga()
 
 
+def verticesAuxiliares(grafo, vertice_final):
+    for i in range(grafo.numVertices - 1):
+        if not grafo.getVertice(i).getConexoes():
+            grafo.addAresta(i, vertice_final)
+
+
+# NOJO
 if __name__ == '__main__':
-    ### Tabela de  atividades
-    # activity = ['A', 'B', 'C', 'D', 'E', 'F']    # atividades
-    # duration = [10, 4, 7, 5, 5, 2]               # duracao de cada atividade
-    # previous = ['', 'A', 'A', 'C', 'B,D', 'C']  # precedente das atividades
-
-    # activity = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', '1']  # atividades
-    # duration = [6, 2, 3, 10, 3, 2, 4, 5, 8, 6, 4, 2, 0]  # duracao de cada atividade
-    # previous = ['', '', '', 'A', 'A', 'B', 'C', 'E', 'F,G', 'G', 'I', 'J', 'D,H,K,L']  # precedente das atividades
-
-    # activity = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']  # atividades
-    # duration = [12, 6, 12, 18, 2, 10, 8, 8, 6, 2, 8]  # duracao de cada atividade
-    # previous = ['', 'A', 'A', 'A', 'B', 'C,D', 'D', 'E', 'F', 'G', 'H,I,J']
-
-    line = list()   # cada linha do txt
-    element = list()   # cada elemento do txt
-    task = dict()
-    file = open('task2.txt')
-
-    for line in file:
-        element = line.split(',')
-        for i in range(len(element)):
-            task[element[0]] = dict()
-            task[element[0]]['id'] = element[0]
-            task[element[0]]['name'] = element[1]
-            task[element[0]]['duration'] = element[2]
-            if element[3] != "\n":  # tem dependencia
-                task[element[0]]['dependencies'] = element[3].strip().split(';')
-            else:
-                task[element[0]]['dependencies'] = ['-1']  # nao tem dependencia
-            task[element[0]]['ES'] = 0  # early start
-            task[element[0]]['EF'] = 0  # early finish
-            task[element[0]]['LS'] = 0  # late start
-            task[element[0]]['LF'] = 0  # late finish
-            task[element[0]]['float'] = 0
-            task[element[0]]['critical'] = False
-
-    forward_pass(task)  # faz o caminho de ida
-
-    keys = list()
-    for e in task.keys():  # lista das chaves das atividades
-        keys.append(e)
-    print("Keys: ", keys)
-
-    keys_reverse = list()
-    while len(keys) > 0:  # lista das chaves ao contrario para caminho de volta
-        keys_reverse.append(keys.pop())
-    print("Keys_reverse: ", keys_reverse)
-    backward_pass(task, keys_reverse)
-
-    """""
-    edges = []
-    for i in range(table_length):  # Em cada atividade
-        if len(previous[i]) < 1:
-            root = activity[i]  # vertice inicial
-            edges.append([root, root])  # caso nao tenha antecessor e o proprio vertice inicial
-        elif len(previous[i]) > 1:
-            aux = previous[i].split(',')
-            for j in aux:
-                edges.append([j, activity[i]])  # Caso tenha mais de um antecessor, adiciona cada um
+    g = Grafo()
+    g.addVertice(0, 0)  # inicio
+    ultimoVertice = 0
+    input_file = open("task2.txt", "r")
+    for line in input_file.readlines():
+        x = line.split(';')
+        g.addVertice(int(x[0]), int(x[1]))
+        ultimoVertice = int(x[0])
+        y = x[2].split(',')
+        if y[0] == '\n':
+            y = '0'
         else:
-            edges.append([previous[i], activity[i]])  # Adiciona o antecessor
+            y[-1] = y[-1].replace('\n', '')
+        for i in y:
+            g.addAresta(int(i), int(x[0]))
 
-    print("Arestas: ", edges)  # add edges
-    """
+    g.addVertice(ultimoVertice + 1, 0)  # fim
+    verticesAuxiliares(g, ultimoVertice + 1)
+    # for i in range(g.numVertices):
+    #    print(g.getVertice(i))
+    caminhoIda(g, g.getVertice(0), 0)
+    caminhoVolta(g.getVertice(ultimoVertice + 1), g.tempoCritico)
+    calculaFolga(g)
 
-    print('ID Atividade, Duracao, ES, EF, LS, LF, float, critical')
-    for t in task:
-        if task[t]['float'] == 0:  # folga = 0 faz parte do caminho critico
-            task[t]['critical'] = True
-        print(str(task[t]['id']) + ', ' + str(task[t]['name']) + ',' + str(task[t]['duration']) + ', ' + str(
-            task[t]['ES']) + ', ' + str(task[t]['EF']) + ', ' + str(task[t]['LS']) + ', ' + str(
-            task[t]['LF']) + ', ' + str(task[t]['float']) + ', ' + str(task[t]['critical']))
+    # for i in range(1, g.numVertices - 1):
+    #    print(str(i) + ": " + str(g.getVertice(i).getEs()) + "-" + str(g.getVertice(i).getEf()) + " / " + str(g.getVertice(i).getLs()) + "-" + str(g.getVertice(i).getLf()) + " / " + str(g.getVertice(i).getGap()))
+
+    # ================================ VIADAGEM PRA PRINTAR =============================
+    G = nx.DiGraph()
+
+    for i in range(g.numVertices):
+        if i == 0:
+            string = "Início"
+        elif i == ultimoVertice + 1:
+            string = "Fim"
+        else:
+            string = str(g.getVertice(i).getId()) + "\n" + str(g.getVertice(i).getEs()) + "-" + str(
+                g.getVertice(i).getEf()) + "\n" + str(g.getVertice(i).getLs()) + "-" + str(
+                g.getVertice(i).getLf()) + "\n" + str(g.getVertice(i).getFolga())
+        G.add_node(string)
+
+    for i in range(g.numVertices):
+        for j in g.getVertice(i).getConexoes():
+            if i == 0:
+                stringI = "Início"
+            else:
+                stringI = str(g.getVertice(i).getId()) + "\n" + str(g.getVertice(i).getEs()) + "-" + str(
+                    g.getVertice(i).getEf()) + "\n" + str(g.getVertice(i).getLs()) + "-" + str(
+                    g.getVertice(i).getLf()) + "\n" + str(g.getVertice(i).getFolga())
+            if j.getId() == ultimoVertice + 1:
+                stringJ = "Fim"
+            else:
+                stringJ = str(j.getId()) + "\n" + str(j.getEs()) + "-" + str(j.getEf()) + "\n" + str(
+                    j.getLs()) + "-" + str(j.getLf()) + "\n" + str(j.getFolga())
+            G.add_edge(stringI, stringJ)
+
+    color_map = []
+    for i in range(g.numVertices):
+        if i == 0 or i == ultimoVertice + 1:
+            color_map.append('green')
+        elif g.getVertice(i).getFolga() == 0:
+            color_map.append('red')
+        else:
+            color_map.append('blue')
+
+    # nx.draw_circular(G, arrows=True, with_labels=True, node_size=2600, node_color=color_map, font_size=10)
+    pos = nx.spring_layout(G)
+    plt.figure(3, figsize=(10, 10))
+    nx.draw(G, pos, arrows=True, with_labels=True, node_size=3500, node_color=color_map, font_size=12)
+    plt.show()
