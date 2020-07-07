@@ -3,46 +3,49 @@ import matplotlib.pyplot as plt
 from Grafos import Grafo
 
 
+# Funcao para fazer o caminho de ida da busca
 def caminhoIda(grafo, vertice, tempo):
-    if tempo >= vertice.getEs():
-        vertice.setEs(tempo)
-        tempoAtual = tempo + vertice.getDuracao()
-        vertice.setEf(tempoAtual)
-        if vertice.getEf() > grafo.tempoCritico:
-            grafo.tempoCritico = vertice.getEf()
-    for amigo in vertice.getConexoes():
+    if tempo >= vertice.getEs():  # verifica se ja foi percorrido
+        vertice.setEs(tempo)  # atribui ao ES do vertice
+        tempoAtual = tempo + vertice.getDuracao()  # faz a soma do tempo atual + a duracao
+        vertice.setEf(tempoAtual)  # atribui ao EF do vertice
+        if vertice.getEf() > grafo.tempoCritico:  # caso seja o maior tempo encontrado
+            grafo.tempoCritico = vertice.getEf()  # vertice e o caminho critico
+    for amigo in vertice.getConexoes():  # vai passando entre cada um dos vertices conectados
         caminhoIda(grafo, amigo, tempoAtual)
 
 
+# Funcao para fazer o caminho de volta da busca
 def caminhoVolta(vertice, tempo):
     tempoAtual = vertice.getLs()
-    if tempo <= vertice.getLf() or vertice.getLf() == -1:
+    if tempo <= vertice.getLf() or vertice.getLf() == -1:  # se já foi percorrido ou se é o ultimo
         vertice.setLf(tempo)
-        tempoAtual = tempo - vertice.getDuracao()
+        tempoAtual = tempo - vertice.getDuracao()  # calculo da duracao
         vertice.setLs(tempoAtual)
     for amigo in vertice.getPredecessores():
-        caminhoVolta(amigo, tempoAtual)
+        caminhoVolta(amigo, tempoAtual)  # repete para o proximo vertice
 
 
+# Funcao que calculo a folga de todos os vertices para identificar o caminho critico
 def calculaFolga(grafo):
     for i in range(grafo.numVertices):
         grafo.getVertice(i).changeFolga()
 
 
+# Vertices iniciais e finais para auxilio da busca
 def verticesAuxiliares(grafo, vertice_final):
     for i in range(grafo.numVertices - 1):
         if not grafo.getVertice(i).getConexoes():
             grafo.addAresta(i, vertice_final)
 
 
-# NOJO
 if __name__ == '__main__':
     g = Grafo()
-    g.addVertice(0, 0)  # inicio
-    ultimoVertice = 0
+    g.addVertice(0, 0)  # adiciona o vertice inicial (aux)
+    ultimoVertice = 0  # adiciona o vertice final  (aux)
     input_file = open("task2.txt", "r")
     for line in input_file.readlines():
-        x = line.split(';')
+        x = line.split(';')  # separando cada elemento
         g.addVertice(int(x[0]), int(x[1]))
         ultimoVertice = int(x[0])
         y = x[2].split(',')
@@ -53,16 +56,13 @@ if __name__ == '__main__':
         for i in y:
             g.addAresta(int(i), int(x[0]))
 
-    g.addVertice(ultimoVertice + 1, 0)  # fim
+    g.addVertice(ultimoVertice + 1, 0)  # adicionando o ultimo vertice depois do(s) ultimo(s)
     verticesAuxiliares(g, ultimoVertice + 1)
-    # for i in range(g.numVertices):
-    #    print(g.getVertice(i))
+
+    # ================================ REALIZACAO DO ALGORTIMO =============================
     caminhoIda(g, g.getVertice(0), 0)
     caminhoVolta(g.getVertice(ultimoVertice + 1), g.tempoCritico)
     calculaFolga(g)
-
-    # for i in range(1, g.numVertices - 1):
-    #    print(str(i) + ": " + str(g.getVertice(i).getEs()) + "-" + str(g.getVertice(i).getEf()) + " / " + str(g.getVertice(i).getLs()) + "-" + str(g.getVertice(i).getLf()) + " / " + str(g.getVertice(i).getGap()))
 
     # ================================ VIADAGEM PRA PRINTAR =============================
     G = nx.DiGraph()
