@@ -1,3 +1,14 @@
+### Dicas para executar o arquivo:
+1. Instale o Python 3.x+
+2. Baixe o repositório
+3. Para selecionar os dados a serem inseridos, edite o arquivo caminhoCritico.py e altere o arquivo:
+    ```python
+        input_file = open("task2.txt", "r")
+    ```
+4. Digite o seguinte comando no terminal (no mesmo diretorio do repositorio):
+    ```
+        python caminhoCritico.py
+    ```
 ### Requisitos
 Fazer um programa que receba uma tabela de atividades, duração e precedentes e monte o grafo de PERT/CPM, identificando o caminho crítico e as folgas nas atividades.
 
